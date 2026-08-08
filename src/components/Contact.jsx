@@ -35,7 +35,7 @@ export default function Contact() {
                 <strong>Name:</strong> Dereje Sebsibe Taddesse
               </p>
               <p>
-                <strong>Email:</strong> contact@derejebuilds.com
+                <strong>Email:</strong> deregood29@gmail.com
               </p>
               <p>
                 <strong>Location:</strong> Addis Ababa, Ethiopia
