@@ -47,6 +47,7 @@ app.get("/api/skills", async (req, res) => {
   try {
     const skills = await prisma.skill.findMany();
     res.json(skills);
+    // eslint-disable-next-line no-unused-vars
   } catch (_) {
     res.status(500).json({ error: "Failed to fetch skills" });
   }
