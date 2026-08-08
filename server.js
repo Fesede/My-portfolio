@@ -1,127 +1,89 @@
 import express from "express";
 import cors from "cors";
-import pkg from "@prisma/client";
-import dotenv from "dotenv";
-import process from "process";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const { PrismaClient } = pkg;
-const prisma = new PrismaClient();
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-// ==================== PROJECTS API ====================
+// In-memory data storage (replaces the database)
+let projects = [
+  {
+    id: 1,
+    title: "Enterprise Logistics System",
+    description:
+      "A comprehensive transport management system engineered for tracking and logistics optimization.",
+    projectLink: "https://github.com/",
+  },
+  {
+    id: 2,
+    title: "Event Management Platform",
+    description:
+      "Full-stack application built to coordinate events with customized employee management features.",
+    projectLink: "https://github.com/",
+  },
+];
 
-// GET: Fetch all projects
-app.get("/api/projects", async (req, res) => {
-  try {
-    const projects = await prisma.project.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    res.json(projects);
-  } catch {
-    res.status(500).json({ error: "Failed to fetch projects" });
-  }
+let skills = [
+  { id: 1, name: "React", percentage: 90 },
+  { id: 2, name: "JavaScript", percentage: 85 },
+  { id: 3, name: "Node.js", percentage: 80 },
+  { id: 4, name: "Tailwind CSS", percentage: 85 },
+  { id: 5, name: "PostgreSQL", percentage: 75 },
+];
+
+let messages = [];
+
+// API Routes
+app.get("/api/projects", (req, res) => {
+  res.json(projects);
 });
 
-// POST: Add a new project (Admin)
-app.post("/api/projects", async (req, res) => {
-  const { title, description, imageUrl, projectLink } = req.body;
-  try {
-    const newProject = await prisma.project.create({
-      data: { title, description, imageUrl, projectLink },
-    });
-    res.json({ success: true, project: newProject });
-    // eslint-disable-next-line no-unused-vars
-  } catch (_) {
-    res.status(500).json({ error: "Failed to create project" });
-  }
+app.get("/api/skills", (req, res) => {
+  res.json(skills);
 });
 
-// ==================== SKILLS API ====================
-
-// GET: Fetch all skills
-app.get("/api/skills", async (req, res) => {
-  try {
-    const skills = await prisma.skill.findMany();
-    res.json(skills);
-    // eslint-disable-next-line no-unused-vars
-  } catch (_) {
-    res.status(500).json({ error: "Failed to fetch skills" });
-  }
-});
-
-// POST: Add a new skill (Admin)
-app.post("/api/skills", async (req, res) => {
-  const { name, percentage } = req.body;
-  try {
-    const newSkill = await prisma.skill.create({
-      data: { name, percentage: Number(percentage) },
-    });
-    res.json({ success: true, skill: newSkill });
-    // eslint-disable-next-line no-unused-vars
-  } catch (_) {
-    res.status(500).json({ error: "Failed to create skill" });
-  }
-});
-
-// ==================== CONTACT MESSAGES API ====================
-
-// GET: Fetch all contact messages (Admin)
-app.get("/api/contact", async (req, res) => {
-  try {
-    const messages = await prisma.contactMessage.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    res.json(messages);
-    // eslint-disable-next-line no-unused-vars
-  } catch (_) {
-    res.status(500).json({ error: "Failed to fetch messages" });
-  }
-});
-
-// POST: Submit a contact form message (Visitor)
-app.post("/api/contact", async (req, res) => {
+app.post("/api/contact", (req, res) => {
   const { name, email, message } = req.body;
-  try {
-    await prisma.contactMessage.create({
-      data: { name, email, message },
-    });
-    res.json({ success: true, message: "Message sent successfully" });
-    // eslint-disable-next-line no-unused-vars
-  } catch (_) {
-    res.status(500).json({ error: "Failed to send message" });
-  }
+  const newMessage = {
+    id: Date.now(),
+    name,
+    email,
+    message,
+    createdAt: new Date(),
+  };
+  messages.push(newMessage);
+  console.log("New contact message received:", newMessage);
+  res
+    .status(201)
+    .json({ success: true, message: "Message sent successfully!" });
 });
 
-// ==================== ADMIN LOGIN API ====================
-
-// POST: Admin Login verification
-app.post("/api/admin/login", async (req, res) => {
+app.post("/api/admin/login", (req, res) => {
   const { username, password } = req.body;
-  try {
-    const admin = await prisma.admin.findUnique({
-      where: { username },
-    });
-
-    if (admin && admin.password === password) {
-      res.json({ success: true, message: "Login successful" });
-    } else {
-      res
-        .status(401)
-        .json({ success: false, error: "Invalid username or password" });
-    }
-    // eslint-disable-next-line no-unused-vars
-  } catch (_) {
-    res.status(500).json({ error: "Server error during login" });
+  // Simple hardcoded admin check
+  if (username === "admin" && password === "securepassword123") {
+    res.json({ success: true, token: "mock-jwt-token" });
+  } else {
+    res.status(401).json({ success: false, message: "Invalid credentials" });
   }
 });
 
-// Start Server
-const PORT = process.env.PORT || 5000;
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, "dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
+// eslint-disable-next-line no-undef
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(
+    `Server is running smoothly on port ${PORT} (No database required!)`,
+  );
 });
