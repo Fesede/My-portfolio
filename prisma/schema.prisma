@@ -1,6 +1,5 @@
 datasource db {
-  provider = "postgresql" // Or "mysql" depending on your Railway setup
-  url      = env("DATABASE_URL")
+  provider = "postgresql" 
 }
 
 generator client {
